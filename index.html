@@ -751,32 +751,76 @@
                 simpanData('pelanggan', plg); renderSemuaData();
             }
         }
-        // === GRAFIK ===
-        function initGrafik() {
-            const byr = ambilData('pembayaran');
-            const ctx1 = document.getElementById('trenChart').getContext('2d');
-            const ctx2 = document.getElementById('metodeChart').getContext('2d');
-            if (trenChart) trenChart.destroy();
-            if (metodeChart) metodeChart.destroy();
-            trenChart = new Chart(ctx1, {
-                type: 'line',
-                data: {
-                    labels: ['Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
-                    datasets: [{ label: 'Pemasukan', data: [150000, 325000, 280000, byr.reduce((s, r) => s + r.jumlah, 0), 0, 0], borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.4 }]
-                },
-                options: { responsive: true, plugins: { legend: { display: false } } }
-            });
-            const byMetode = { Tunai: 0, Transfer: 0, QRIS: 0 };
-            byr.forEach(r => byMetode[r.metode] += r.jumlah);
-            metodeChart = new Chart(ctx2, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(byMetode).filter(k => byMetode[k] > 0),
-                    datasets: [{ data: Object.values(byMetode).filter(v => v > 0), backgroundColor: ['#10B981', '#3B82F6', '#F59E0B'] }]
-                },
-                options: { responsive: true }
-            });
+       // === GRAFIK ===
+function initGrafik() {
+    const byr = ambilData('pembayaran');
+    const ctx1 = document.getElementById('trenChart').getContext('2d');
+    const ctx2 = document.getElementById('metodeChart').getContext('2d');
+    
+    if (trenChart) trenChart.destroy();
+    if (metodeChart) metodeChart.destroy();
+
+    // === GRAFIK TREN — DIUBAH AGAR DINAMIS ===
+    const urutanBulan = ['07','08','09','10','11','12']; // Juli s.d. Desember
+    const namaBulan = ['Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+    const pendapatanPerBulan = urutanBulan.map(bln => {
+        return byr
+            .filter(r => r.bulan === `2026-${bln}`)
+            .reduce((total, r) => total + r.jumlah, 0);
+    });
+
+    trenChart = new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: namaBulan,
+            datasets: [{
+                label: 'Pemasukan',
+                data: pendapatanPerBulan, // ✅ Sekarang ikut berubah otomatis
+                borderColor: '#10B981',
+                backgroundColor: 'rgba(16,185,129,0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    ticks: {
+                        callback: function(nilai) {
+                            return formatRupiah(nilai);
+                        }
+                    }
+                }
+            }
         }
+    });
+
+    // === GRAFIK METODE TETAP SAMA ===
+    const byMetode = { Tunai: 0, Transfer: 0, QRIS: 0 };
+    byr.forEach(r => {
+        if (byMetode.hasOwnProperty(r.metode)) {
+            byMetode[r.metode] += r.jumlah;
+        }
+    });
+    
+    metodeChart = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(byMetode).filter(k => byMetode[k] > 0),
+            datasets: [{
+                data: Object.values(byMetode).filter(v => v > 0),
+                backgroundColor: ['#10B981', '#3B82F6', '#F59E0B']
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+}
         function formatRupiah(a) {
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(a);
         }
@@ -1006,10 +1050,6 @@ async function muatSemuaDataPelanggan() {
     console.error('❌ Gagal memantau pelanggan:', e);
   }
 }
-</script>
-
-// Jalankan saat halaman siap
-document.addEventListener('DOMContentLoaded', buatAkunAdminPertama);
 </script>
 </body>
 </html>
