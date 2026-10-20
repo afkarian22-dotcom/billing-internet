@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Billing Internet - EnterCode PRO</title>
@@ -953,15 +956,16 @@ async function simpanPelangganKeFirebase(data) {
   }
 }
 
-// Fungsi Ambil Semua Pelanggan
-async function ambilSemuaPelangganDariFirebase() {
-  try {
-    const snap = await db.collection('pelanggan').get();
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  } catch (e) {
-    console.error('Gagal baca pelanggan:', e);
-    return [];
-  }
+// === PANTU PELANGGAN — OTOMATIS TERBARU SETIAP SAAT ===
+function pantauPelanggan() {
+  db.collection('pelanggan').onSnapshot((snapshot) => {
+    const daftar = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    tampilkanDaftarKeTabel(daftar);
+    console.log('🔄 Pelanggan terbaru:', daftar.length, 'data');
+  });
 }
 
 // Buat akun admin pertama kali otomatis
@@ -978,30 +982,24 @@ async function buatAkunAdminPertama() {
   }
 }// Jalankan saat halaman selesai dimuat
 document.addEventListener('DOMContentLoaded', async function() {
-  // Buat akun admin (hanya sekali)
   await buatAkunAdminPertama();
   
-  // Muat ulang data pelanggan OTOMATIS setiap kali dibuka
-  await muatSemuaDataPelanggan();
+  // Mulai pantau — langsung tahu kalau ada perubahan!
+  pantauPelanggan();
 });
 
 // Fungsi muat ulang semua data pelanggan
 async function muatSemuaDataPelanggan() {
   try {
-    // Baca data pertama kali
-    const daftarPelanggan = await ambilSemuaPelanggan();
-    tampilkanDaftarKeTabel(daftarPelanggan);
-    console.log('✅ Data terbaru dimuat:', daftarPelanggan.length, 'pelanggan');
-
-    // 🔄 PANTAU PERUBAHAN OTOMATIS — langsung muncul tanpa segarkan!
-    db.collection('pelanggan').onSnapshot((snap) => {
-      const dataBaru = snap.docs.map(doc => doc.data());
-      tampilkanDaftarKeTabel(dataBaru);
-      console.log('🔄 Data diperbarui otomatis:', dataBaru.length, 'pelanggan');
+    // === BACA LANGSUNG DARI FIREBASE — OTOMATIS TERBARU SELALU ===
+    db.collection('pelanggan').onSnapshot((snapshot) => {
+      const daftar = snapshot.docs.map(doc => doc.data());
+      tampilkanDaftarKeTabel(daftar);
+      console.log('🔄 PELANGGAN TERBARU:', daftar.length, 'data');
     });
 
   } catch (e) {
-    console.error('❌ Gagal memuat data:', e);
+    console.error('❌ Gagal memantau pelanggan:', e);
   }
 }
 </script>
