@@ -976,7 +976,35 @@ async function buatAkunAdminPertama() {
     });
     console.log('Akun admin dibuat');
   }
+}// Jalankan saat halaman selesai dimuat
+document.addEventListener('DOMContentLoaded', async function() {
+  // Buat akun admin (hanya sekali)
+  await buatAkunAdminPertama();
+  
+  // Muat ulang data pelanggan OTOMATIS setiap kali dibuka
+  await muatSemuaDataPelanggan();
+});
+
+// Fungsi muat ulang semua data pelanggan
+async function muatSemuaDataPelanggan() {
+  try {
+    // Baca data pertama kali
+    const daftarPelanggan = await ambilSemuaPelanggan();
+    tampilkanDaftarKeTabel(daftarPelanggan);
+    console.log('✅ Data terbaru dimuat:', daftarPelanggan.length, 'pelanggan');
+
+    // 🔄 PANTAU PERUBAHAN OTOMATIS — langsung muncul tanpa segarkan!
+    db.collection('pelanggan').onSnapshot((snap) => {
+      const dataBaru = snap.docs.map(doc => doc.data());
+      tampilkanDaftarKeTabel(dataBaru);
+      console.log('🔄 Data diperbarui otomatis:', dataBaru.length, 'pelanggan');
+    });
+
+  } catch (e) {
+    console.error('❌ Gagal memuat data:', e);
+  }
 }
+</script>
 
 // Jalankan saat halaman siap
 document.addEventListener('DOMContentLoaded', buatAkunAdminPertama);
