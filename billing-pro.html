@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing Internet - EnterCode PRO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#1E293B',
+                        sidebar: '#1A1F35',
+                        primary: '#3B82F6',
+                        success: '#10B981',
+                        danger: '#EF4444',
+                        warning: '#F59E0B',
+                        card: '#272E4D'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto { content-visibility: auto; }
+            .sidebar-link {
+                @apply flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-primary/20 cursor-pointer;
+            }
+            .sidebar-link.active { @apply bg-primary/20 text-white font-medium; }
+            .card { @apply bg-card rounded-xl p-5 shadow-lg; }
+            .btn-aksi {
+                @apply cursor-pointer transition-all duration-200 hover:scale-110;
+            }
+            .btn-edit { @apply text-yellow-400 hover:text-yellow-300; }
+            .btn-hapus { @apply text-red-400 hover:text-red-300; }
+            .btn-utama { @apply cursor-pointer hover:opacity-90 active:scale-95; }
+        }
+    </style>
+	<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDZyGygUNoexuAFEfh58CyCedZh9UEKXVqhM",
+    authDomain: "billing-kbmy.firebaseapp.com",
+    projectId: "billing-kbmy",
+    storageBucket: "billing-kbmy.appspot.com",
+    messagingSenderId: "756061267627",
+    appId: "1:756061267627:web:1e74bfeda0f8e05a2cb9ee"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  window.db = db;
+</script>
+
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+    <!-- Halaman Login -->
+    <div id="loginPage" class="flex items-center justify-center min-h-screen p-4">
+        <div class="w-full max-w-md bg-card rounded-2xl p-7 shadow-2xl">
+            <div class="text-center mb-7">
+                <h2 class="text-2xl font-bold text-white">EnterCode Billing PRO</h2>
+                <p class="text-gray-400 mt-1">Sistem Pembayaran Internet</p>
+                <div class="mt-3 p-2 bg-gray-800/50 rounded-lg">
+                    <p id="waktuLogin" class="text-sm text-green-400 font-mono">--:--:--</p>
+                    <p id="tanggalLogin" class="text-xs text-gray-400 mt-1">-- Hari, -- -- ----</p>
+                </div>
+            </div>
+            <div id="loginError" class="bg-red-500/20 text-red-400 p-3 rounded-lg mb-4 hidden"></div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-300 mb-2">Username</label>
+                    <input type="text" id="username" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:border-primary" placeholder="Masukkan username">
+                </div>
+                <div>
+                    <label class="block text-gray-300 mb-2">Password</label>
+                    <input type="password" id="password" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:border-primary" placeholder="Masukkan password">
+                </div>
+                <button onclick="login()" class="w-full bg-primary hover:bg-primary/90 py-3 rounded-lg font-medium transition-all btn-utama"><button onclick="cekMasuk()">Masuk Sistem</button>
+            </div>
+            <div class="mt-4 text-center text-sm text-gray-400">
+                <p>SELAMAT DATANG DI BILLING INTERNET</p>
+            </div>
+        </div>
+    </div>
+    <!-- Halaman Utama -->
+    <div id="mainApp" class="hidden">
+        <div class="flex flex-col md:flex-row min-h-screen">
+            <!-- Sidebar -->
+            <aside class="w-full md:w-64 bg-sidebar p-4 flex-shrink-0">
+                <div class="mb-7 flex items-center justify-between">
+                    <h1 class="text-xl font-bold text-white">KBMY.NET</h1>
+                    <button class="md:hidden text-gray-400" onclick="toggleSidebar()">
+                        <i class="fa fa-bars"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-6 p-3 bg-gray-800/50 rounded-lg text-center">
+                    <p id="waktuSidebar" class="text-lg font-mono text-green-400">--:--:--</p>
+                    <p id="tanggalSidebar" class="text-xs text-gray-400 mt-1">-- Hari, -- -- ----</p>
+                </div>
+                
+                <nav id="sidebarNav" class="space-y-2 hidden md:block">
+                    <a class="sidebar-link active" onclick="showMenu('dashboard')">
+                        <i class="fa fa-tachometer w-5 text-center"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    
+                    <div id="adminMenuOnly">
+                        <p class="px-4 py-2 text-xs text-gray-400 mt-4">ADMINISTRASI</p>
+                        <a class="sidebar-link" onclick="showMenu('paket')">
+                            <i class="fa fa-box w-5 text-center"></i>
+                            <span>Paket</span>
+                        </a>
+                        <a class="sidebar-link" onclick="showMenu('pelanggan')">
+                            <i class="fa fa-users w-5 text-center"></i>
+                            <span>Pelanggan</span>
+                        </a>
+                        <a class="sidebar-link" onclick="showMenu('pembukuan')">
+                            <i class="fa fa-book w-5 text-center"></i>
+                            <span>Pembukuan</span>
+                        </a>
+						</a>
+                        <a class="sidebar-link" onclick="showMenu('tambahAgen')">
+    <i class="fa fa-user-plus w-5 text-center"></i>
+    <span>Tambah AGEN</span>
+</a>
+                    </div>
+                    <p class="px-4 py-2 text-xs text-gray-400 mt-4">TRANSAKSI</p>
+                    <a class="sidebar-link" onclick="showMenu('pembayaran')">
+                        <i class="fa fa-money w-5 text-center"></i>
+                        <span>Pembayaran</span>
+                    </a>
+                    <a class="sidebar-link" onclick="showMenu('laporan')">
+                        <i class="fa fa-file-text w-5 text-center"></i>
+                        <span>Laporan</span>
+                    </a>
+                    
+                    <a class="sidebar-link mt-6 text-red-400 hover:bg-red-500/20" onclick="logout()">
+                        <i class="fa fa-sign-out w-5 text-center"></i>
+                        <span>Keluar</span>
+                    </a>
+                </nav>
+                
+                <div class="mt-6 p-3 bg-gray-800/50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                            <span id="userInitial" class="font-bold">A</span>
+                        </div>
+                        <div>
+                            <p id="userName" class="font-medium text-sm">Pengguna</p>
+                            <p id="userRole" class="text-xs text-gray-400">Peran</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            <!-- Konten Utama -->
+            <main class="flex-1 p-4 md:p-6">
+                <!-- Dashboard -->
+                <div id="menu-dashboard" class="menu-page">
+                    <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold">Dashboard</h2>
+                            <p class="text-gray-400 text-sm">Data statistik billing</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2 text-sm items-center">
+                            <span id="tglHariIni" class="bg-green-500/20 text-green-400 px-3 py-1 rounded font-mono">--/--/----</span>
+                            <span id="jamSekarang" class="bg-primary/20 text-primary px-3 py-1 rounded font-mono">--:--:--</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="card">
+                            <p class="text-gray-400 text-sm">Total Pelanggan</p>
+                            <p id="jmlPelanggan" class="text-2xl font-bold mt-1">0</p>
+                        </div>
+                        <div class="card">
+                            <p class="text-gray-400 text-sm">Total Pemasukan</p>
+                            <p id="totalPemasukan" class="text-2xl font-bold mt-1">Rp 0</p>
+                        </div>
+                        <div class="card">
+                            <p class="text-gray-400 text-sm">Sudah Bayar</p>
+                            <p id="sudahBayar" class="text-2xl font-bold mt-1">0</p>
+                        </div>
+                        <div class="card">
+                            <p class="text-gray-400 text-sm">Belum Bayar</p>
+                            <p id="belumBayar" class="text-2xl font-bold mt-1">0</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="card">
+                            <h3 class="font-medium mb-4">Tren Keuangan</h3>
+                            <canvas id="trenChart" height="200"></canvas>
+                        </div>
+                        <div class="card">
+                            <h3 class="font-medium mb-4">Distribusi Pembayaran</h3>
+                            <canvas id="metodeChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <!-- Menu Paket -->
+                <div id="menu-paket" class="menu-page hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold">Daftar Paket Internet</h2>
+                        <button id="btnTambahPaket" onclick="openModal('tambahPaket')" class="bg-primary px-4 py-2 rounded-lg text-sm btn-utama">
+                            <i class="fa fa-plus mr-1"></i> Tambah Paket
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full bg-card rounded-xl">
+                            <thead>
+                                <tr class="text-left text-gray-400 border-b border-gray-700">
+                                    <th class="p-4">Nama Paket</th>
+                                    <th class="p-4">Kecepatan</th>
+                                    <th class="p-4">Harga</th>
+                                    <th class="p-4">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="daftarPaket"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- Menu Pelanggan -->
+                <div id="menu-pelanggan" class="menu-page hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold">Data Konsumen</h2>
+                        <button id="btnTambahPelanggan" onclick="openModal('tambahPelanggan')" class="bg-primary px-4 py-2 rounded-lg text-sm btn-utama">
+                            <i class="fa fa-plus mr-1"></i> Tambah Pelanggan
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full bg-card rounded-xl">
+                            <thead>
+                                <tr class="text-left text-gray-400 border-b border-gray-700">
+                                    <th class="p-4">Nama</th>
+                                    <th class="p-4">Alamat</th>
+                                    <th class="p-4">Paket</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="daftarPelanggan"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- Menu Pembayaran -->
+                <div id="menu-pembayaran" class="menu-page hidden">
+                    <h2 class="text-xl font-bold mb-6">Catat Pembayaran</h2>
+                    <div class="card mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-gray-300 mb-2">Pilih Pelanggan</label>
+                                <select id="bayarPelanggan" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600">
+                                    <option value="">-- Pilih Pelanggan --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-300 mb-2">Jumlah Bayar</label>
+                                <input type="number" id="bayarJumlah" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600" placeholder="0">
+                            </div>
+                            <div>
+                                <label class="block text-gray-300 mb-2">Metode Bayar</label>
+                                <select id="bayarMetode" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600">
+                                    <option value="Tunai">Tunai</option>
+                                    <option value="Transfer">Transfer</option>
+                                    <option value="QRIS">QRIS</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-300 mb-2">Bulan Tagihan</label>
+                                <input type="month" id="bayarBulan" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600">
+                            </div>
+                        </div>
+                        <button onclick="simpanPembayaran()" class="mt-4 bg-success px-6 py-2 rounded-lg btn-utama">Simpan Pembayaran</button>
+                    </div>
+                    
+                    <h3 class="font-medium mb-4">Riwayat Pembayaran</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full bg-card rounded-xl">
+                            <thead>
+                                <tr class="text-left text-gray-400 border-b border-gray-700">
+                                    <th class="p-4">Tanggal & Jam</th>
+                                    <th class="p-4">Nama</th>
+                                    <th class="p-4">Jumlah</th>
+                                    <th class="p-4">Metode</th>
+                                    <th class="p-4">Catatan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="riwayatPembayaran"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- Menu Pembukuan -->
+                <div id="menu-pembukuan" class="menu-page hidden">
+                    <h2 class="text-xl font-bold mb-6">Pembukuan Uang Masuk</h2>
+                    <div class="card mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-gray-300 mb-2">Tanggal</label>
+                                <input type="date" id="bukuTanggal" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600">
+                            </div>
+                            <div>
+                                <label class="block text-gray-300 mb-2">Keterangan</label>
+                                <input type="text" id="bukuKeterangan" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600" placeholder="Pembayaran bulan...">
+                            </div>
+                            <div>
+                                <label class="block text-gray-300 mb-2">Jumlah (Rp)</label>
+                                <input type="number" id="bukuJumlah" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600" placeholder="0">
+                            </div>
+                        </div>
+                        <button onclick="simpanPembukuan()" class="mt-4 bg-primary px-6 py-2 rounded-lg btn-utama">Catat Ke Pembukuan</button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full bg-card rounded-xl">
+                            <thead>
+                                <tr class="text-left text-gray-400 border-b border-gray-700">
+                                    <th class="p-4">Tanggal & Jam</th>
+                                    <th class="p-4">Keterangan</th>
+                                    <th class="p-4">Jumlah</th>
+                                    <th class="p-4">Dicatat Oleh</th>
+                                </tr>
+                            </thead>
+                            <tbody id="daftarPembukuan"></tbody>
+                        </table>
+                    </div>
+                </div><!-- Menu Tambah Agen -->
+<div id="menu-tambahAgen" class="menu-page hidden">
+    <h2 class="text-xl font-bold mb-6">Kelola Agen</h2>
+
+    <div id="pesanAgen" class="mb-4 hidden p-3 rounded-lg"></div>
+
+    <div class="card mb-6">
+        <h3 class="font-medium mb-4">Tambah Agen Baru</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-gray-300 mb-2">Nama Lengkap Agen</label>
+                <input type="text" id="namaAgen" 
+                    class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:border-primary"
+                    placeholder="Contoh: Ahmad Suherman">
+            </div>
+            <div>
+                <label class="block text-gray-300 mb-2">Nomor Telepon</label>
+                <input type="tel" id="telpAgen" 
+                    class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:border-primary"
+                    placeholder="Contoh: 0812-1234-5678">
+            </div>
+            <div>
+                <label class="block text-gray-300 mb-2">Username Login</label>
+                <input type="text" id="usernameAgen" 
+                    class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:border-primary"
+                    placeholder="Buat nama pengguna">
+            </div>
+            <div>
+                <label class="block text-gray-300 mb-2">Kata Sandi</label>
+                <input type="password" id="passwordAgen" 
+                    class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:border-primary"
+                    placeholder="Buat kata sandi">
+            </div>
+        </div>
+
+        <button onclick="simpanAgen()" 
+            class="mt-6 bg-primary px-6 py-3 rounded-lg font-medium">
+            Simpan Akun Agen
+        </button>
+    </div>
+
+    <div class="card">
+        <h3 class="font-medium mb-4">Daftar Agen Terdaftar</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="text-left text-gray-400 border-b border-gray-700">
+                        <th class="p-3">No</th>
+                        <th class="p-3">Nama Agen</th>
+                        <th class="p-3">Telepon</th>
+                        <th class="p-3">Username</th>
+						 <th class="p-3">Password</th> <!-- ✅ BARU -->
+                        <th class="p-3">Status</th>
+                        <th class="p-3 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="daftarAgen">
+                    <tr>
+                        <td colspan="6" class="p-4 text-center text-gray-400">Belum ada data agen</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+                <!-- Menu Laporan -->
+                <div id="menu-laporan" class="menu-page hidden">
+                    <h2 class="text-xl font-bold mb-6">Laporan Status Pembayaran</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="card">
+                            <h3 class="font-medium text-green-400 mb-3">Sudah Membayar</h3>
+                            <div id="daftarSudahBayar" class="space-y-2"></div>
+                        </div>
+                        <div class="card">
+                            <h3 class="font-medium text-red-400 mb-3">Belum Membayar</h3>
+                            <div id="daftarBelumBayar" class="space-y-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div id="modalContainer" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-card rounded-xl w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="font-bold text-lg">Judul</h3>
+                <button onclick="closeModal()" class="text-gray-400 btn-aksi"><i class="fa fa-times"></i></button>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+    <script>
+        // Data Pengguna
+        const users = [
+            { username: 'admin', password: '220224', nama: 'Administrator', peran: 'admin' },
+            { username: 'Agen', password: '123456', nama: 'Agen Pengumpul', peran: 'agen' }
+        ];
+        let currentUser = null;
+        let editMode = null, editId = null;
+        let trenChart, metodeChart;
+        // === PENYIMPANAN PERMANEN (LocalStorage) ===
+        const STORAGE_KEYS = {
+            paket: 'ec_billing_paket',
+            pelanggan: 'ec_billing_pelanggan',
+            pembayaran: 'ec_billing_pembayaran',
+            pembukuan: 'ec_billing_pembukuan'
+        };
+        const dataAwal = {
+            paket: [
+                { id: 1, nama: 'Paket 10 Mbps', kecepatan: '10 Mbps', harga: 125000 },
+                { id: 2, nama: 'Paket 20 Mbps', kecepatan: '20 Mbps', harga: 175000 },
+                { id: 3, nama: 'Paket 30 Mbps', kecepatan: '30 Mbps', harga: 225000 }
+            ],
+            pelanggan: [
+                { id: 1, nama: 'Muhammad Rohkir', alamat: 'Bandung, Jawa Barat', paketId: 1, status: 'aktif' },
+                { id: 2, nama: 'Budi Santoso', alamat: 'Cibiru, Bandung', paketId: 2, status: 'aktif' },
+                { id: 3, nama: 'Siti Aminah', alamat: 'Cileunyi, Bandung', paketId: 1, status: 'aktif' }
+            ],
+            pembayaran: [
+                { id: 1, tanggal: '2026-10-05', jam: '09:30:00', pelangganId: 1, jumlah: 125000, metode: 'Tunai', bulan: '2026-10', dicatatOleh: 'agen1' },
+                { id: 2, tanggal: '2026-10-08', jam: '14:15:00', pelangganId: 2, jumlah: 175000, metode: 'Transfer', bulan: '2026-10', dicatatOleh: 'admin' }
+            ],
+            pembukuan: []
+        };
+        // Muat dari penyimpanan atau pakai data awal
+        function muatData() {
+            Object.entries(STORAGE_KEYS).forEach(([jenis, kunci]) => {
+                if (!localStorage.getItem(kunci)) {
+                    localStorage.setItem(kunci, JSON.stringify(dataAwal[jenis]));
+                }
+            });
+        }
+        muatData();
+        function ambilData(jenis) {
+            return JSON.parse(localStorage.getItem(STORAGE_KEYS[jenis]) || '[]');
+        }
+        function simpanData(jenis, data) {
+            localStorage.setItem(STORAGE_KEYS[jenis], JSON.stringify(data));
+        }
+        // === FUNGSI WAKTU & TANGGAL ===
+        function ambilHariIndonesia(hari) {
+            return ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][hari];
+        }
+        function ambilBulanIndonesia(bulan) {
+            return ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][bulan];
+        }
+        function duaDigit(n) { return n < 10 ? '0' + n : n; }
+        function updateWaktuTanggal() {
+            const now = new Date();
+            const jamStr = `${duaDigit(now.getHours())}:${duaDigit(now.getMinutes())}:${duaDigit(now.getSeconds())}`;
+            const tglPendek = `${duaDigit(now.getDate())}/${duaDigit(now.getMonth()+1)}/${now.getFullYear()}`;
+            const tglLengkap = `${ambilHariIndonesia(now.getDay())}, ${duaDigit(now.getDate())} ${ambilBulanIndonesia(now.getMonth())} ${now.getFullYear()}`;
+            const map = {
+                waktuLogin: jamStr, jamSekarang: jamStr, waktuSidebar: jamStr,
+                tanggalLogin: tglLengkap, tanggalSidebar: tglLengkap, tglHariIni: tglPendek
+            };
+            Object.entries(map).forEach(([id, val]) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = val;
+            });
+        }
+        updateWaktuTanggal();
+        setInterval(updateWaktuTanggal, 1000);
+        // === LOGIN ===
+        function login() {
+            const uname = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value;
+            const user = users.find(u => u.username === uname && u.password === pass);
+            if (user) {
+                currentUser = user;
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('userName').textContent = user.nama;
+                document.getElementById('userRole').textContent = user.peran.toUpperCase();
+                document.getElementById('userInitial').textContent = user.nama[0];
+                document.getElementById('adminMenuOnly').style.display = user.peran === 'admin' ? 'block' : 'none';
+                document.getElementById('btnTambahPelanggan').style.display = user.peran === 'admin' ? 'block' : 'none';
+                renderSemuaData(); initGrafik();
+            } else {
+                const err = document.getElementById('loginError');
+                err.textContent = 'Username atau password salah!'; err.classList.remove('hidden');
+            }
+        }
+        function logout() {
+            currentUser = null;
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('username').value = ''; document.getElementById('password').value = '';
+        }
+        function showMenu(nama) {
+            document.querySelectorAll('.menu-page').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`menu-${nama}`).classList.remove('hidden');
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+            event.target.closest('.sidebar-link').classList.add('active');
+            if (window.innerWidth < 768) toggleSidebar();
+        }
+        function toggleSidebar() { document.getElementById('sidebarNav').classList.toggle('hidden'); }
+        // === RENDER DATA ===
+        function renderSemuaData() {
+            renderDashboard(); renderPaket(); renderPelanggan();
+            renderPembayaran(); renderLaporan(); renderPembukuan(); isiDropdownPelanggan();
+        }
+        function renderDashboard() {
+            const plg = ambilData('pelanggan');
+            const byr = ambilData('pembayaran');
+            const total = byr.reduce((s, r) => s + r.jumlah, 0);
+            const sudah = plg.filter(p => byr.some(r => r.pelangganId === p.id && r.bulan === '2026-10')).length;
+            document.getElementById('jmlPelanggan').textContent = plg.length;
+            document.getElementById('totalPemasukan').textContent = formatRupiah(total);
+            document.getElementById('sudahBayar').textContent = sudah;
+            document.getElementById('belumBayar').textContent = plg.length - sudah;
+        }
+        function renderPaket() {
+            const paket = ambilData('paket');
+            document.getElementById('daftarPaket').innerHTML = paket.map(p => `
+                <tr class="border-b border-gray-700">
+                    <td class="p-3">${p.nama}</td>
+                    <td class="p-3">${p.kecepatan}</td>
+                    <td class="p-3">${formatRupiah(p.harga)}</td>
+                    <td class="p-3">
+                        ${currentUser?.peran === 'admin' ? `
+                            <button class="btn-aksi btn-edit mr-2" onclick="editPaket(${p.id})" title="Ubah">
+                                <i class="fa fa-pencil"></i>
+                            </button>
+                            <button class="btn-aksi btn-hapus" onclick="hapusPaket(${p.id})" title="Hapus">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        ` : ''}
+                    </td>
+                </tr>`).join('');
+        }
+        function renderPelanggan() {
+            const plg = ambilData('pelanggan');
+            const pkt = ambilData('paket');
+            const byr = ambilData('pembayaran');
+            document.getElementById('daftarPelanggan').innerHTML = plg.map(p => {
+                const paket = pkt.find(x => x.id === p.paketId);
+                const lunas = byr.some(r => r.pelangganId === p.id && r.bulan === '2026-10');
+                return `<tr class="border-b border-gray-700">
+                    <td class="p-3">${p.nama}</td>
+                    <td class="p-3">${p.alamat}</td>
+                    <td class="p-3">${paket?.nama || '-'}</td>
+                    <td class="p-3"><span class="px-2 py-1 rounded text-xs ${lunas ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">${lunas ? 'Sudah Bayar' : 'Belum Bayar'}</span></td>
+                    <td class="p-3">
+                        ${currentUser?.peran === 'admin' ? `
+                            <button class="btn-aksi btn-edit mr-2" onclick="editPelanggan(${p.id})" title="Ubah">
+                                <i class="fa fa-pencil"></i>
+                            </button>
+                            <button class="btn-aksi btn-hapus" onclick="hapusPelanggan(${p.id})" title="Hapus">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        ` : ''}
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+        function renderPembayaran() {
+            const byr = ambilData('pembayaran');
+            const plg = ambilData('pelanggan');
+            document.getElementById('riwayatPembayaran').innerHTML = byr.map(r => {
+                const p = plg.find(x => x.id === r.pelangganId);
+                return `<tr class="border-b border-gray-700">
+                    <td class="p-3 text-xs">${r.tanggal} ${r.jam}</td>
+                    <td class="p-3">${p?.nama || '-'}</td>
+                    <td class="p-3">${formatRupiah(r.jumlah)}</td>
+                    <td class="p-3">${r.metode}</td>
+                    <td class="p-3 text-xs text-gray-400">oleh ${r.dicatatOleh}</td>
+                </tr>`;
+            }).join('');
+        }
+        function renderLaporan() {
+            const plg = ambilData('pelanggan');
+            const pkt = ambilData('paket');
+            const byr = ambilData('pembayaran');
+            const sudah = plg.filter(p => byr.some(r => r.pelangganId === p.id && r.bulan === '2026-10'));
+            const belum = plg.filter(p => !byr.some(r => r.pelangganId === p.id && r.bulan === '2026-10'));
+            document.getElementById('daftarSudahBayar').innerHTML = sudah.map(p => {
+                const paket = pkt.find(x => x.id === p.paketId);
+                return `<div class="p-2 bg-green-500/10 rounded"><p class="font-medium">${p.nama}</p><p class="text-xs text-gray-400">${paket?.nama} — ${formatRupiah(paket?.harga || 0)}</p></div>`;
+            }).join('') || '<p class="text-gray-400 text-sm">Tidak ada data</p>';
+            document.getElementById('daftarBelumBayar').innerHTML = belum.map(p => {
+                const paket = pkt.find(x => x.id === p.paketId);
+                return `<div class="p-2 bg-red-500/10 rounded"><p class="font-medium">${p.nama}</p><p class="text-xs text-gray-400">${paket?.nama} — ${formatRupiah(paket?.harga || 0)}</p></div>`;
+            }).join('') || '<p class="text-gray-400 text-sm">Tidak ada data</p>';
+        }
+        function renderPembukuan() {
+            const buku = ambilData('pembukuan');
+            document.getElementById('daftarPembukuan').innerHTML = buku.length ? buku.map(r => `<tr class="border-b border-gray-700"><td class="p-3 text-xs">${r.tanggal} ${r.jam || ''}</td><td class="p-3">${r.keterangan}</td><td class="p-3">${formatRupiah(r.jumlah)}</td><td class="p-3">${r.dicatatOleh}</td></tr>`).join('') : '<tr><td colspan="4" class="p-4 text-center text-gray-400">Belum ada catatan</td></tr>';
+        }
+        function isiDropdownPelanggan() {
+            const plg = ambilData('pelanggan');
+            document.getElementById('bayarPelanggan').innerHTML = '<option value="">-- Pilih Pelanggan --</option>' + plg.map(p => `<option value="${p.id}">${p.nama}</option>`).join('');
+        }
+        // === SIMPAN DATA ===
+        function simpanPembayaran() {
+            const pelId = +document.getElementById('bayarPelanggan').value;
+            const jml = +document.getElementById('bayarJumlah').value;
+            const met = document.getElementById('bayarMetode').value;
+            const bln = document.getElementById('bayarBulan').value;
+            if (!pelId || !jml || !bln) return alert('Lengkapi semua data!');
+            const now = new Date();
+            const byr = ambilData('pembayaran');
+            byr.unshift({
+                id: Date.now(),
+                tanggal: now.toISOString().split('T')[0],
+                jam: `${duaDigit(now.getHours())}:${duaDigit(now.getMinutes())}:${duaDigit(now.getSeconds())}`,
+                pelangganId: pelId, jumlah: jml, metode: met, bulan: bln, dicatatOleh: currentUser.username
+            });
+            simpanData('pembayaran', byr);
+            document.getElementById('bayarPelanggan').value = '';
+            document.getElementById('bayarJumlah').value = '';
+            renderSemuaData(); initGrafik();
+            alert('Pembayaran tersimpan! Data tidak akan hilang.');
+        }
+        function simpanPembukuan() {
+            if (currentUser.peran !== 'admin') return alert('Hanya admin!');
+            const tgl = document.getElementById('bukuTanggal').value;
+            const ket = document.getElementById('bukuKeterangan').value;
+            const jml = +document.getElementById('bukuJumlah').value;
+            if (!tgl || !ket || !jml) return alert('Lengkapi semua data!');
+            const now = new Date();
+            const buku = ambilData('pembukuan');
+            buku.unshift({
+                tanggal: tgl, jam: `${duaDigit(now.getHours())}:${duaDigit(now.getMinutes())}:${duaDigit(now.getSeconds())}`,
+                keterangan: ket, jumlah: jml, dicatatOleh: currentUser.nama
+            });
+            simpanData('pembukuan', buku);
+            document.getElementById('bukuTanggal').value = '';
+            document.getElementById('bukuKeterangan').value = '';
+            document.getElementById('bukuJumlah').value = '';
+            renderPembukuan(); alert('Tersimpan!');
+        }
+        // === MODAL EDIT & TAMBAH ===
+        function openModal(jenis, id = null) {
+            editMode = jenis; editId = id;
+            const judul = document.getElementById('modalTitle');
+            const isi = document.getElementById('modalBody');
+            const paket = ambilData('paket');
+            const pelanggan = ambilData('pelanggan');
+            
+            if (jenis === 'tambahPaket' || jenis === 'editPaket') {
+                const p = jenis === 'editPaket' ? paket.find(x => x.id === id) : null;
+                judul.textContent = jenis === 'tambahPaket' ? 'Tambah Paket Baru' : 'Ubah Data Paket';
+                isi.innerHTML = `<div class="space-y-4">
+                    <div><label class="block text-gray-300 mb-2">Nama Paket</label><input type="text" id="inpNamaPaket" class="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600" value="${p?.nama || ''}"></div>
+                    <div><label class="block text-gray-300 mb-2">Kecepatan</label><input type="text" id="inpKecepatan" class="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600" value="${p?.kecepatan || ''}" placeholder="contoh: 20 Mbps"></div>
+                    <div><label class="block text-gray-300 mb-2">Harga (Rp)</label><input type="number" id="inpHarga" class="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600" value="${p?.harga || ''}"></div>
+                    <button onclick="simpanPaket()" class="w-full bg-primary py-2 rounded-lg btn-utama">Simpan</button>
+                </div>`;
+            } else {
+                const p = jenis === 'editPelanggan' ? pelanggan.find(x => x.id === id) : null;
+                judul.textContent = jenis === 'tambahPelanggan' ? 'Tambah Pelanggan Baru' : 'Ubah Data Pelanggan';
+                isi.innerHTML = `<div class="space-y-4">
+                    <div><label class="block text-gray-300 mb-2">Nama Lengkap</label><input type="text" id="inpNamaPel" class="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600" value="${p?.nama || ''}"></div>
+                    <div><label class="block text-gray-300 mb-2">Alamat</label><textarea id="inpAlamat" class="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600" rows="2">${p?.alamat || ''}</textarea></div>
+                    <div><label class="block text-gray-300 mb-2">Pilih Paket</label><select id="inpPaket" class="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600">
+                        ${paket.map(x => `<option value="${x.id}" ${p?.paketId === x.id ? 'selected' : ''}>${x.nama} - ${formatRupiah(x.harga)}</option>`).join('')}
+                    </select></div>
+                    <button onclick="simpanPelanggan()" class="w-full bg-primary py-2 rounded-lg btn-utama">Simpan</button>
+                </div>`;
+            }
+            document.getElementById('modalContainer').classList.remove('hidden');
+        }
+        function closeModal() {
+            document.getElementById('modalContainer').classList.add('hidden');
+            editMode = editId = null;
+        }
+        function editPaket(id) { openModal('editPaket', id); }
+        function editPelanggan(id) { openModal('editPelanggan', id); }
+        function simpanPaket() {
+            const nama = document.getElementById('inpNamaPaket').value.trim();
+            const kpc = document.getElementById('inpKecepatan').value.trim();
+            const harga = +document.getElementById('inpHarga').value;
+            if (!nama || !kpc || !harga) return alert('Lengkapi semua data!');
+            const paket = ambilData('paket');
+            if (editMode === 'editPaket') {
+                const idx = paket.findIndex(x => x.id === editId);
+                if (idx !== -1) paket[idx] = { id: editId, nama, kecepatan: kpc, harga };
+            } else {
+                paket.push({ id: Date.now(), nama, kecepatan: kpc, harga });
+            }
+            simpanData('paket', paket); closeModal(); renderPaket();
+        }
+        function simpanPelanggan() {
+            const nama = document.getElementById('inpNamaPel').value.trim();
+            const alamat = document.getElementById('inpAlamat').value.trim();
+            const pktId = +document.getElementById('inpPaket').value;
+            if (!nama || !alamat || !pktId) return alert('Lengkapi semua data!');
+            const plg = ambilData('pelanggan');
+            if (editMode === 'editPelanggan') {
+                const idx = plg.findIndex(x => x.id === editId);
+                if (idx !== -1) plg[idx] = { ...plg[idx], nama, alamat, paketId: pktId };
+            } else {
+                plg.push({ id: Date.now(), nama, alamat, paketId: pktId, status: 'aktif' });
+            }
+            simpanData('pelanggan', plg); closeModal(); renderSemuaData();
+        }
+        function hapusPaket(id) {
+            if (confirm('Yakin hapus paket ini?')) {
+                const paket = ambilData('paket').filter(x => x.id !== id);
+                simpanData('paket', paket); renderPaket();
+            }
+        }
+        function hapusPelanggan(id) {
+            if (confirm('Yakin hapus pelanggan ini?')) {
+                const plg = ambilData('pelanggan').filter(x => x.id !== id);
+                simpanData('pelanggan', plg); renderSemuaData();
+            }
+        }
+        // === GRAFIK ===
+        function initGrafik() {
+            const byr = ambilData('pembayaran');
+            const ctx1 = document.getElementById('trenChart').getContext('2d');
+            const ctx2 = document.getElementById('metodeChart').getContext('2d');
+            if (trenChart) trenChart.destroy();
+            if (metodeChart) metodeChart.destroy();
+            trenChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
+                    datasets: [{ label: 'Pemasukan', data: [150000, 325000, 280000, byr.reduce((s, r) => s + r.jumlah, 0), 0, 0], borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.4 }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+            const byMetode = { Tunai: 0, Transfer: 0, QRIS: 0 };
+            byr.forEach(r => byMetode[r.metode] += r.jumlah);
+            metodeChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(byMetode).filter(k => byMetode[k] > 0),
+                    datasets: [{ data: Object.values(byMetode).filter(v => v > 0), backgroundColor: ['#10B981', '#3B82F6', '#F59E0B'] }]
+                },
+                options: { responsive: true }
+            });
+        }
+        function formatRupiah(a) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(a);
+        }
+		function ambilPengguna() {
+    return JSON.parse(localStorage.getItem('daftarPengguna') || '[{"id":1,"nama":"Administrator","telepon":"-","username":"admin","password":"admin123","peran":"admin","status":"aktif"}]');
+}
+
+function simpanPengguna(data) {
+    localStorage.setItem('daftarPengguna', JSON.stringify(data));
+}
+// === FUNGSI LOGIN — BACA SEMUA AKUN ===
+async function cekMasuk() {
+  const user = document.getElementById('username').value.trim();
+  const sandi = document.getElementById('password').value.trim();
+  const pesan = document.getElementById('loginError');
+
+  if (!user || !sandi) {
+    pesan.textContent = 'Isi dulu username & password!';
+    return;
+  }
+
+  const daftar = await ambilPenggunaDariFirebase();
+  const cocok = daftar.find(a => 
+    a.username === user && 
+    a.password === sandi
+  );
+
+  if (cocok) {
+    localStorage.setItem('sesiAktif', JSON.stringify({
+      nama: cocok.nama,
+      username: cocok.username,
+      peran: cocok.peran
+    }));
+    window.location.href = 'billing-pro.html';
+  } else {
+    pesan.textContent = 'Username atau password salah!';
+  }
+}
+function tampilkanPesanAgen(teks, sukses = true) {
+    const el = document.getElementById('pesanAgen');
+    if (!el) return;
+    el.className = 'mb-4 p-3 rounded-lg ' + (sukses ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400');
+    el.textContent = teks;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 4000);
+}
+
+function simpanAgen() {
+    const nama = document.getElementById('namaAgen');
+    const telp = document.getElementById('telpAgen');
+    const username = document.getElementById('usernameAgen');
+    const password = document.getElementById('passwordAgen');
+
+    // Cek apakah semua elemen ditemukan
+    if (!nama || !telp || !username || !password) {
+        alert('Error: Kolom tidak ditemukan di halaman!');
+        return;
+    }
+
+    const n = nama.value.trim();
+    const t = telp.value.trim();
+    const u = username.value.trim();
+    const p = password.value.trim();
+
+    if (!n || !t || !u || !p) {
+        alert('⚠️ Semua kolom wajib diisi!');
+        return;
+    }
+
+    const pengguna = ambilPengguna();
+    if (pengguna.some(item => item.username.toLowerCase() === u.toLowerCase())) {
+        alert(`⚠️ Username "${u}" sudah dipakai! Gunakan yang lain.`);
+        return;
+    }
+
+    pengguna.push({
+        id: Date.now(),
+        nama: n,
+        telepon: t,
+        username: u,
+        password: p,
+        peran: 'agen',
+        status: 'aktif'
+    });
+    simpanPengguna(pengguna);
+
+    // Kosongkan form
+    nama.value = '';
+    telp.value = '';
+    username.value = '';
+    password.value = '';
+
+    if (typeof renderDaftarAgen === 'function') renderDaftarAgen();
+    if (typeof renderDashboard === 'function') renderDashboard();
+
+    alert('✅ Agen berhasil disimpan!');
+}
+
+function hapusAgen(id) {
+    if (!confirm('Yakin ingin menghapus agen ini?')) return;
+    const semua = ambilPengguna();
+    const tersisa = semua.filter(u => u.id !== id || u.peran === 'admin');
+    simpanPengguna(tersisa);
+    renderDaftarAgen();
+    if (typeof renderDashboard === 'function') renderDashboard();
+}
+
+function renderDaftarAgen() {
+    const tbody = document.getElementById('daftarAgen');
+    if (!tbody) return;
+    
+    const daftar = ambilPengguna().filter(u => u.peran === 'agen' || u.peran === 'admin');
+    
+    if (daftar.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-400">Belum ada data agen</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = daftar.map((u, i) => `
+        <tr class="border-b border-gray-700">
+            <td class="p-3">${i + 1}</td>
+            <td class="p-3 font-medium">${u.nama}</td>
+            <td class="p-3">${u.telepon || '-'}</td>
+            <td class="p-3">${u.username}</td>
+            <td class="p-3">
+                <code class="bg-slate-700 px-2 py-1 rounded text-sm text-yellow-300">${u.password}</code>
+            </td>
+            <td class="p-3">
+                <span class="px-2 py-1 rounded text-xs ${u.status === 'aktif' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">
+                    ${u.status === 'aktif' ? 'Aktif' : 'Nonaktif'}
+                </span>
+            </td>
+            <td class="p-3 text-center">
+                ${u.peran !== 'admin' ? `
+                    <button onclick="hapusAgen(${u.id})" class="text-red-400 hover:text-red-300">Hapus</button>
+                ` : '<span class="text-gray-500">—</span>'}
+            </td>
+        </tr>
+    `).join('');
+	// Muat daftar agen otomatis saat halaman dibuka
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof renderDaftarAgen === 'function') {
+        renderDaftarAgen();
+    }
+});
+}
+    </script>
+	<script>
+// Fungsi Simpan Pengguna ke Firebase
+async function simpanPenggunaKeFirebase(data) {
+  try {
+    await db.collection('pengguna').doc(data.username).set(data);
+    console.log('Tersimpan ke Firebase:', data.username);
+    return true;
+  } catch (e) {
+    console.error('Gagal simpan:', e);
+    return false;
+  }
+}
+
+// Fungsi Ambil Semua Pengguna dari Firebase
+async function ambilPenggunaDariFirebase() {
+  try {
+    const snap = await db.collection('pengguna').get();
+    return snap.docs.map(d => d.data());
+  } catch (e) {
+    console.error('Gagal baca:', e);
+    return [];
+  }
+}
+
+// Fungsi Simpan Pelanggan ke Firebase
+async function simpanPelangganKeFirebase(data) {
+  try {
+    await db.collection('pelanggan').add(data);
+    console.log('Pelanggan tersimpan');
+    return true;
+  } catch (e) {
+    console.error('Gagal simpan pelanggan:', e);
+    return false;
+  }
+}
+
+// Fungsi Ambil Semua Pelanggan
+async function ambilSemuaPelangganDariFirebase() {
+  try {
+    const snap = await db.collection('pelanggan').get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) {
+    console.error('Gagal baca pelanggan:', e);
+    return [];
+  }
+}
+
+// Buat akun admin pertama kali otomatis
+async function buatAkunAdminPertama() {
+  const daftar = await ambilPenggunaDariFirebase();
+  if (daftar.length === 0) {
+    await simpanPenggunaKeFirebase({
+      nama: 'Administrator',
+      username: 'admin',
+      password: 'admin123',
+      peran: 'admin'
+    });
+    console.log('Akun admin dibuat');
+  }
+}
+
+// Jalankan saat halaman siap
+document.addEventListener('DOMContentLoaded', buatAkunAdminPertama);
+</script>
+</body>
+</html>
