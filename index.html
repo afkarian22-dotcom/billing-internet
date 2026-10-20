@@ -988,9 +988,18 @@ document.addEventListener('DOMContentLoaded', async function() {
 // Fungsi muat ulang semua data pelanggan
 async function muatSemuaDataPelanggan() {
   try {
+    // Baca data pertama kali
     const daftarPelanggan = await ambilSemuaPelanggan();
     tampilkanDaftarKeTabel(daftarPelanggan);
     console.log('✅ Data terbaru dimuat:', daftarPelanggan.length, 'pelanggan');
+
+    // 🔄 PANTAU PERUBAHAN OTOMATIS — langsung muncul tanpa segarkan!
+    db.collection('pelanggan').onSnapshot((snap) => {
+      const dataBaru = snap.docs.map(doc => doc.data());
+      tampilkanDaftarKeTabel(dataBaru);
+      console.log('🔄 Data diperbarui otomatis:', dataBaru.length, 'pelanggan');
+    });
+
   } catch (e) {
     console.error('❌ Gagal memuat data:', e);
   }
