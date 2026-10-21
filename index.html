@@ -442,13 +442,13 @@
         let currentUser = null;
         let editMode = null, editId = null;
         let trenChart, metodeChart;
-        // === PENYIMPANAN PERMANEN (LocalStorage) ===
-        const STORAGE_KEYS = {
-            paket: 'ec_billing_paket',
-            pelanggan: 'ec_billing_pelanggan',
-            pembayaran: 'ec_billing_pembayaran',
-            pembukuan: 'ec_billing_pembukuan'
-        };
+      // === PENYIMPANAN PERMANEN (LocalStorage) ===
+const STORAGE_KEYS = {
+    paket: 'ec_billing_paket',
+    pelanggan: 'ec_billing_pelanggan',
+    pembayaran: 'ec_billing_pembayaran',
+    pembukuan: 'ec_billing_pembukuan'
+};
         const dataAwal = {
             paket: [
                 { id: 1, nama: 'Paket 10 Mbps', kecepatan: '10 Mbps', harga: 125000 },
@@ -456,9 +456,7 @@
                 { id: 3, nama: 'Paket 30 Mbps', kecepatan: '30 Mbps', harga: 225000 }
             ],
             pelanggan: [
-                { id: 1, nama: 'Muhammad Rohkir', alamat: 'Bandung, Jawa Barat', paketId: 1, status: 'aktif' },
-                { id: 2, nama: 'Budi Santoso', alamat: 'Cibiru, Bandung', paketId: 2, status: 'aktif' },
-                { id: 3, nama: 'Siti Aminah', alamat: 'Cileunyi, Bandung', paketId: 1, status: 'aktif' }
+                { id: 1, nama: 'contoh', alamat: 'Bandung, Jawa Barat', paketId: 1, status: 'aktif' },
             ],
             pembayaran: [
                 { id: 1, tanggal: '2026-10-05', jam: '09:30:00', pelangganId: 1, jumlah: 125000, metode: 'Tunai', bulan: '2026-10', dicatatOleh: 'agen1' },
@@ -538,29 +536,29 @@ async function muatData() {
 }
 // Jalankan saat halaman dibuka
 muatData();
-        // === AMBIL DATA DARI PENYIMPANAN ===
+// === INI VERSI YANG BENAR UNTUK KODE ANDA ===
 function ambilData(jenis) {
   return JSON.parse(localStorage.getItem(STORAGE_KEYS[jenis]) || '[]');
 }
 
 // === SIMPAN DATA ===
 async function simpanData(jenis, data) {
+  // Simpan ke localStorage
   localStorage.setItem(STORAGE_KEYS[jenis], JSON.stringify(data));
-  // ... kode simpan ...
-}
-  // Kumpulkan SEMUA data lalu kirim ke GitHub
+
+  // Kumpulkan semua data untuk dikirim ke GitHub
   const dataPenuh = {
     pelanggan: JSON.parse(localStorage.getItem(STORAGE_KEYS.pelanggan) || '[]'),
     pembayaran: JSON.parse(localStorage.getItem(STORAGE_KEYS.pembayaran) || '[]'),
     paket: JSON.parse(localStorage.getItem(STORAGE_KEYS.paket) || '[]'),
     agen: JSON.parse(localStorage.getItem(STORAGE_KEYS.agen) || '[]')
   };
-  
+
   const berhasil = await simpanKeGitHub(dataPenuh);
   if (berhasil) {
     console.log('✅ Tersimpan ke GitHub');
   } else {
-    console.log('⚠️ Tersimpan hanya di perangkat ini — cek token GitHub');
+    console.log('⚠️ Tersimpan hanya di perangkat ini');
   }
 }
         // === FUNGSI WAKTU & TANGGAL ===
@@ -588,31 +586,76 @@ async function simpanData(jenis, data) {
         updateWaktuTanggal();
         setInterval(updateWaktuTanggal, 1000);
         // === LOGIN ===
-        function login() {
-            const uname = document.getElementById('username').value.trim();
-            const pass = document.getElementById('password').value;
-            const user = users.find(u => u.username === uname && u.password === pass);
-            if (user) {
-                currentUser = user;
-                document.getElementById('loginPage').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                document.getElementById('userName').textContent = user.nama;
-                document.getElementById('userRole').textContent = user.peran.toUpperCase();
-                document.getElementById('userInitial').textContent = user.nama[0];
-                document.getElementById('adminMenuOnly').style.display = user.peran === 'admin' ? 'block' : 'none';
-                document.getElementById('btnTambahPelanggan').style.display = user.peran === 'admin' ? 'block' : 'none';
-                renderSemuaData(); initGrafik();
-            } else {
-                const err = document.getElementById('loginError');
-                err.textContent = 'Username atau password salah!'; err.classList.remove('hidden');
-            }
-        }
+       function login() {
+    const uname = document.getElementById('username').value.trim();
+    const pass = document.getElementById('password').value;
+    const user = users.find(u => u.username === uname && u.password === pass);
+    
+    if (user) {
+        currentUser = user;
+        
+        // ✅ SIMPAN STATUS LOGIN AGAR TIDAK HILANG SAAT REFRESH
+        localStorage.setItem('currentUser', JSON.stringify(user));
+
+        document.getElementById('loginPage').classList.add('hidden');
+        document.getElementById('mainApp').classList.remove('hidden');
+        document.getElementById('userName').textContent = user.nama;
+        document.getElementById('userRole').textContent = user.peran.toUpperCase();
+        document.getElementById('userInitial').textContent = user.nama[0];
+        document.getElementById('adminMenuOnly').style.display = user.peran === 'admin' ? 'block' : 'none';
+        document.getElementById('btnTambahPelanggan').style.display = user.peran === 'admin' ? 'block' : 'none';
+        renderSemuaData();
+        initGrafik();
+    } else {
+        const err = document.getElementById('loginError');
+        err.textContent = 'Username atau password salah!';
+        err.classList.remove('hidden');
+    }
+}
         function logout() {
-            currentUser = null;
-            document.getElementById('mainApp').classList.add('hidden');
-            document.getElementById('loginPage').classList.remove('hidden');
-            document.getElementById('username').value = ''; document.getElementById('password').value = '';
+    // ✅ HAPUS STATUS LOGIN
+    localStorage.removeItem('currentUser');
+    currentUser = null;
+    
+    document.getElementById('mainApp').classList.add('hidden');
+    document.getElementById('loginPage').classList.remove('hidden');
+    
+    // Kosongkan input
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+}
+// === CEK & PULIHKAN STATUS LOGIN SAAT HALAMAN DIBUKA ===
+function pulihkanLogin() {
+    const dataTersimpan = localStorage.getItem('currentUser');
+    if (!dataTersimpan) return;
+
+    try {
+        const user = JSON.parse(dataTersimpan);
+        // Pastikan akun masih ada di daftar
+        const masihAda = users.find(u => u.username === user.username);
+        if (!masihAda) {
+            localStorage.removeItem('currentUser');
+            return;
         }
+
+        // Langsung masuk otomatis
+        currentUser = masihAda;
+        document.getElementById('loginPage').classList.add('hidden');
+        document.getElementById('mainApp').classList.remove('hidden');
+        document.getElementById('userName').textContent = masihAda.nama;
+        document.getElementById('userRole').textContent = masihAda.peran.toUpperCase();
+        document.getElementById('userInitial').textContent = masihAda.nama[0];
+        document.getElementById('adminMenuOnly').style.display = masihAda.peran === 'admin' ? 'block' : 'none';
+        document.getElementById('btnTambahPelanggan').style.display = masihAda.peran === 'admin' ? 'block' : 'none';
+        renderSemuaData();
+        initGrafik();
+    } catch (e) {
+        localStorage.removeItem('currentUser');
+    }
+}
+
+// Jalankan otomatis saat halaman selesai dimuat
+pulihkanLogin();
         function showMenu(nama) {
             document.querySelectorAll('.menu-page').forEach(p => p.classList.add('hidden'));
             document.getElementById(`menu-${nama}`).classList.remove('hidden');
@@ -627,15 +670,32 @@ async function simpanData(jenis, data) {
             renderPembayaran(); renderLaporan(); renderPembukuan(); isiDropdownPelanggan();
         }
         function renderDashboard() {
-            const plg = ambilData('pelanggan');
-            const byr = ambilData('pembayaran');
-            const total = byr.reduce((s, r) => s + r.jumlah, 0);
-            const sudah = plg.filter(p => byr.some(r => r.pelangganId === p.id && r.bulan === '2026-10')).length;
-            document.getElementById('jmlPelanggan').textContent = plg.length;
-            document.getElementById('totalPemasukan').textContent = formatRupiah(total);
-            document.getElementById('sudahBayar').textContent = sudah;
-            document.getElementById('belumBayar').textContent = plg.length - sudah;
-        }
+    // === SESUAIKAN PAKAI NAMA DARI STORAGE_KEYS ===
+    const plg = ambilData('pelanggan');   // ← harus sama persis kuncinya
+    const byr = ambilData('pembayaran');  //   di STORAGE_KEYS
+
+    const totalPelanggan = plg.length;
+
+    const sekarang = new Date();
+    const bulanIni = `${sekarang.getFullYear()}-${String(sekarang.getMonth() + 1).padStart(2, '0')}`;
+
+    const idSudahBayar = new Set(
+        byr
+            .filter(r => r.bulan === bulanIni)
+            .map(r => r.pelangganId)
+    );
+    const sudah = idSudahBayar.size;
+    const belum = totalPelanggan - sudah;
+
+    const total = byr
+        .filter(r => r.bulan === bulanIni)
+        .reduce((sum, r) => sum + (r.jumlah || 0), 0);
+
+    document.getElementById('jmlPelanggan').textContent = totalPelanggan;
+    document.getElementById('totalPemasukan').textContent = formatRupiah(total);
+    document.getElementById('sudahBayar').textContent = sudah;
+    document.getElementById('belumBayar').textContent = belum;
+}
         function renderPaket() {
             const paket = ambilData('paket');
             document.getElementById('daftarPaket').innerHTML = paket.map(p => `
@@ -656,7 +716,62 @@ async function simpanData(jenis, data) {
                 </tr>`).join('');
         }
         function renderPelanggan() {
-            const plg = ambilData('pelanggan');
+            const plg = ambilData('pelanggan');async function hapusPelanggan(id) {
+  if (confirm('Yakin hapus pelanggan ini?')) {
+    // Ambil data terbaru
+    const plg = ambilData('pelanggan');
+
+    // Buat daftar BARU tanpa data yang dihapus
+    const plgBaru = plg.filter(x => x.id !== id);
+
+    // Simpan daftar yang baru
+    await simpanData('pelanggan', plgBaru);
+
+    // Tampilkan ulang — PENTING! Pastikan nama fungsinya BENAR
+    renderPelanggan();
+  }
+}async function hapusPelanggan(id) {
+  if (confirm('Yakin hapus pelanggan ini?')) {
+    // Ambil data terbaru
+    const plg = ambilData('pelanggan');
+
+    // Buat daftar BARU tanpa data yang dihapus
+    const plgBaru = plg.filter(x => x.id !== id);
+
+    // Simpan daftar yang baru
+    await simpanData('pelanggan', plgBaru);
+
+    // Tampilkan ulang — PENTING! Pastikan nama fungsinya BENAR
+    renderPelanggan();
+  }
+}
+async function hapusPelanggan(id) {
+  console.log('🗑️ Menghapus ID:', id);
+
+  if (!confirm('Yakin hapus pelanggan ini?')) {
+    console.log('❌ Dibatalkan');
+    return;
+  }
+
+  const plg = ambilData('pelanggan');
+  console.log('📋 Data sebelum hapus:', plg);
+
+  const plgBaru = plg.filter(x => {
+    console.log('Cek ID:', x.id, '!==', id, '→', x.id !== id);
+    return x.id !== id;
+  });
+
+  console.log('📋 Data sesudah hapus:', plgBaru);
+
+  await simpanData('pelanggan', plgBaru);
+
+  renderPelanggan();
+  renderDashboard();
+  renderLaporan();
+  isiDropdownPelanggan();
+
+  alert('✅ Data berhasil dihapus!');
+}
             const pkt = ambilData('paket');
             const byr = ambilData('pembayaran');
             document.getElementById('daftarPelanggan').innerHTML = plg.map(p => {
@@ -680,20 +795,63 @@ async function simpanData(jenis, data) {
                 </tr>`;
             }).join('');
         }
-        function renderPembayaran() {
-            const byr = ambilData('pembayaran');
-            const plg = ambilData('pelanggan');
-            document.getElementById('riwayatPembayaran').innerHTML = byr.map(r => {
-                const p = plg.find(x => x.id === r.pelangganId);
-                return `<tr class="border-b border-gray-700">
-                    <td class="p-3 text-xs">${r.tanggal} ${r.jam}</td>
-                    <td class="p-3">${p?.nama || '-'}</td>
-                    <td class="p-3">${formatRupiah(r.jumlah)}</td>
-                    <td class="p-3">${r.metode}</td>
-                    <td class="p-3 text-xs text-gray-400">oleh ${r.dicatatOleh}</td>
-                </tr>`;
-            }).join('');
-        }
+   function renderPembayaran() {
+    const byr = ambilData('pembayaran');
+    const plg = ambilData('pelanggan');
+    
+    document.getElementById('riwayatPembayaran').innerHTML = byr.map(r => {
+        const p = plg.find(x => x.id === r.pelangganId);
+        return `<tr class="border-b border-gray-700">
+            <td class="p-3 text-xs">${r.tanggal} ${r.jam}</td>
+            <td class="p-3">${p?.nama || '-'}</td>
+            <td class="p-3">${formatRupiah(r.jumlah)}</td>
+            <td class="p-3">${r.metode}</td>
+            <td class="p-3 text-xs text-gray-400">oleh ${r.dicatatOleh}</td>
+            <td class="p-3 text-center">
+                ${currentUser?.peran === 'admin' ? `
+                    <button class="btn-aksi btn-edit mr-1" onclick="editPembayaran(${r.id})" title="Ubah">
+                        <i class="fa fa-pencil"></i>
+                    </button>
+                    <button class="btn-aksi btn-hapus" onclick="hapusPembayaran(${r.id})" title="Hapus">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                ` : ''}
+            </td>
+        </tr>`;
+    }).join('');
+	}
+// === FUNGSI EDIT & HAPUS PEMBAYARAN ===
+function editPembayaran(id) {
+    console.log('✅ editPembayaran dipanggil, ID:', id);
+    const byr = ambilData('pembayaran');
+    const data = byr.find(r => r.id === id);
+    if (!data) {
+        console.log('❌ Data tidak ditemukan');
+        return;
+    }
+    document.getElementById('bayarPelanggan').value = data.pelangganId;
+    document.getElementById('bayarJumlah').value = data.jumlah;
+    document.getElementById('bayarMetode').value = data.metode;
+    document.getElementById('bayarBulan').value = data.bulan;
+    editMode = 'pembayaran';
+    editId = id;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function hapusPembayaran(id) {
+    console.log('✅ hapusPembayaran dipanggil, ID:', id);
+    if (!confirm('Yakin ingin MENGHAPUS catatan ini? Tindakan tidak bisa dibatalkan!')) {
+        return;
+    }
+    const byr = ambilData('pembayaran');
+    const byrTersisa = byr.filter(r => r.id !== id);
+    await simpanData('pembayaran', byrTersisa);
+    renderPembayaran();
+    renderDashboard();
+    renderLaporan();
+    alert('✅ Catatan pembayaran berhasil dihapus!');
+}
+
         function renderLaporan() {
             const plg = ambilData('pelanggan');
             const pkt = ambilData('paket');
@@ -793,7 +951,7 @@ async function simpanData(jenis, data) {
         }
         function editPaket(id) { openModal('editPaket', id); }
         function editPelanggan(id) { openModal('editPelanggan', id); }
-        async function simpanPaket() {
+        function simpanPaket() {
             const nama = document.getElementById('inpNamaPaket').value.trim();
             const kpc = document.getElementById('inpKecepatan').value.trim();
             const harga = +document.getElementById('inpHarga').value;
@@ -805,7 +963,7 @@ async function simpanData(jenis, data) {
             } else {
                 paket.push({ id: Date.now(), nama, kecepatan: kpc, harga });
             }
-           await simpanData('paket', paket); closeModal(); renderPaket();
+            simpanData('paket', paket); closeModal(); renderPaket();
         }
         async function simpanPelanggan() {
             const nama = document.getElementById('inpNamaPel').value.trim();
@@ -827,12 +985,21 @@ async function simpanData(jenis, data) {
                 await simpanData('paket', paket); renderPaket();
             }
         }
-        async function hapusPelanggan(id) {
-            if (confirm('Yakin hapus pelanggan ini?')) {
-                const plg = ambilData('pelanggan').filter(x => x.id !== id);
-                await simpanData('pelanggan', plg); renderDaftarPelanggan();
-            }
-        }
+ async function hapusPelanggan(id) {
+  if (confirm('Yakin hapus pelanggan ini?')) {
+    // Ambil data terbaru
+    const plg = ambilData('pelanggan');
+    
+    // Buat daftar BARU tanpa data yang dihapus
+    const plgBaru = plg.filter(x => x.id !== id);
+    
+    // Simpan daftar yang baru
+    await simpanData('pelanggan', plgBaru);
+    
+    // Tampilkan ulang — PENTING! Pastikan nama fungsinya BENAR
+    renderPelanggan();
+  }
+}
        // === GRAFIK ===
 function initGrafik() {
     const byr = ambilData('pembayaran');
