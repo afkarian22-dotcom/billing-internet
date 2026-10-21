@@ -538,11 +538,16 @@ async function muatData() {
 }
 // Jalankan saat halaman dibuka
 muatData();
-        // ✅ Simpan ke lokal DAN ke GitHub
+        // === AMBIL DATA DARI PENYIMPANAN ===
+function ambilData(jenis) {
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS[jenis]) || '[]');
+}
+
+// === SIMPAN DATA ===
 async function simpanData(jenis, data) {
-  // Tetap simpan di perangkat agar cepat
   localStorage.setItem(STORAGE_KEYS[jenis], JSON.stringify(data));
-  
+  // ... kode simpan ...
+}
   // Kumpulkan SEMUA data lalu kirim ke GitHub
   const dataPenuh = {
     pelanggan: JSON.parse(localStorage.getItem(STORAGE_KEYS.pelanggan) || '[]'),
@@ -752,7 +757,7 @@ async function simpanData(jenis, data) {
             renderPembukuan(); alert('Tersimpan!');
         }
         // === MODAL EDIT & TAMBAH ===
-        function openModal(jenis, id = null) {
+       async function openModal(jenis, id = null) {
             editMode = jenis; editId = id;
             const judul = document.getElementById('modalTitle');
             const isi = document.getElementById('modalBody');
@@ -788,7 +793,7 @@ async function simpanData(jenis, data) {
         }
         function editPaket(id) { openModal('editPaket', id); }
         function editPelanggan(id) { openModal('editPelanggan', id); }
-        function simpanPaket() {
+        async function simpanPaket() {
             const nama = document.getElementById('inpNamaPaket').value.trim();
             const kpc = document.getElementById('inpKecepatan').value.trim();
             const harga = +document.getElementById('inpHarga').value;
@@ -800,9 +805,9 @@ async function simpanData(jenis, data) {
             } else {
                 paket.push({ id: Date.now(), nama, kecepatan: kpc, harga });
             }
-            simpanData('paket', paket); closeModal(); renderPaket();
+           await simpanData('paket', paket); closeModal(); renderPaket();
         }
-        function simpanPelanggan() {
+        async function simpanPelanggan() {
             const nama = document.getElementById('inpNamaPel').value.trim();
             const alamat = document.getElementById('inpAlamat').value.trim();
             const pktId = +document.getElementById('inpPaket').value;
@@ -814,18 +819,18 @@ async function simpanData(jenis, data) {
             } else {
                 plg.push({ id: Date.now(), nama, alamat, paketId: pktId, status: 'aktif' });
             }
-            simpanData('pelanggan', plg); closeModal(); renderSemuaData();
+            await simpanData('pelanggan', plg); closeModal(); renderSemuaData();
         }
-        function hapusPaket(id) {
+        async function hapusPaket(id) {
             if (confirm('Yakin hapus paket ini?')) {
                 const paket = ambilData('paket').filter(x => x.id !== id);
-                simpanData('paket', paket); renderPaket();
+                await simpanData('paket', paket); renderPaket();
             }
         }
-        function hapusPelanggan(id) {
+        async function hapusPelanggan(id) {
             if (confirm('Yakin hapus pelanggan ini?')) {
                 const plg = ambilData('pelanggan').filter(x => x.id !== id);
-                simpanData('pelanggan', plg); renderSemuaData();
+                await simpanData('pelanggan', plg); renderDaftarPelanggan();
             }
         }
        // === GRAFIK ===
