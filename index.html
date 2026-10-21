@@ -466,21 +466,98 @@
             ],
             pembukuan: []
         };
-        // Muat dari penyimpanan atau pakai data awal
-        function muatData() {
-            Object.entries(STORAGE_KEYS).forEach(([jenis, kunci]) => {
-                if (!localStorage.getItem(kunci)) {
-                    localStorage.setItem(kunci, JSON.stringify(dataAwal[jenis]));
-                }
-            });
-        }
-        muatData();
-        function ambilData(jenis) {
-            return JSON.parse(localStorage.getItem(STORAGE_KEYS[jenis]) || '[]');
-        }
-        function simpanData(jenis, data) {
-            localStorage.setItem(STORAGE_KEYS[jenis], JSON.stringify(data));
-        }
+		// ===== HUBUNGAN KE GITHUB =====
+const GITHUB_USER = 'afkarian22-dotcom';
+const GITHUB_REPO = 'billing-internet';
+const DATA_FILE = 'data.json';
+// Ganti dengan token aslimu nanti
+const GITHUB_TOKEN = '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';
+
+// Ambil data terbaru dari GitHub
+async function ambilDariGitHub() {
+  if (!GITHUB_TOKEN) return null;
+  try {
+    const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${DATA_FILE}`, {
+      cache: 'no-store'
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const isi = decodeURIComponent(escape(atob(json.content)));
+    return JSON.parse(isi);
+  } catch (e) {
+    console.log('Tidak bisa ambil dari GitHub:', e);
+    return null;
+  }
+}
+
+// Simpan data ke GitHub
+async function simpanKeGitHub(dataPenuh) {
+  if (!GITHUB_TOKEN) {
+    alert('⚠️ Isi GITHUB_TOKEN dulu!');
+    return false;
+  }
+  const konten = btoa(unescape(encodeURIComponent(JSON.stringify(dataPenuh, null, 2))));
+  let sha = '';
+  try {
+    const cek = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${DATA_FILE}`);
+    if (cek.ok) { const r = await cek.json(); sha = r.sha; }
+  } catch {}
+
+  const kirim = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${DATA_FILE}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `token ${GITHUB_TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      message: 'Update data otomatis',
+      content: konten,
+      sha: sha
+    })
+  });
+  return kirim.ok;
+}// ✅ Yang baru — cek GitHub dulu
+async function muatData() {
+  const dataGitHub = await ambilDariGitHub();
+  
+  if (dataGitHub) {
+    // Pakai data TERBARU dari GitHub
+    Object.entries(STORAGE_KEYS).forEach(([jenis, kunci]) => {
+      localStorage.setItem(kunci, JSON.stringify(dataGitHub[jenis] || []));
+    });
+    console.log('✅ Data dimuat dari GitHub');
+  } else {
+    // Kalau belum ada, pakai data awal
+    Object.entries(STORAGE_KEYS).forEach(([jenis, kunci]) => {
+      if (!localStorage.getItem(kunci)) {
+        localStorage.setItem(kunci, JSON.stringify(dataAwal[jenis]));
+      }
+    });
+    console.log('📂 Pakai data awal');
+  }
+}
+// Jalankan saat halaman dibuka
+muatData();
+        // ✅ Simpan ke lokal DAN ke GitHub
+async function simpanData(jenis, data) {
+  // Tetap simpan di perangkat agar cepat
+  localStorage.setItem(STORAGE_KEYS[jenis], JSON.stringify(data));
+  
+  // Kumpulkan SEMUA data lalu kirim ke GitHub
+  const dataPenuh = {
+    pelanggan: JSON.parse(localStorage.getItem(STORAGE_KEYS.pelanggan) || '[]'),
+    pembayaran: JSON.parse(localStorage.getItem(STORAGE_KEYS.pembayaran) || '[]'),
+    paket: JSON.parse(localStorage.getItem(STORAGE_KEYS.paket) || '[]'),
+    agen: JSON.parse(localStorage.getItem(STORAGE_KEYS.agen) || '[]')
+  };
+  
+  const berhasil = await simpanKeGitHub(dataPenuh);
+  if (berhasil) {
+    console.log('✅ Tersimpan ke GitHub');
+  } else {
+    console.log('⚠️ Tersimpan hanya di perangkat ini — cek token GitHub');
+  }
+}
         // === FUNGSI WAKTU & TANGGAL ===
         function ambilHariIndonesia(hari) {
             return ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][hari];
