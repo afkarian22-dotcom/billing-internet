@@ -1,0 +1,13 @@
+{
+  "pelanggan": [
+    { "id": 1, "nama": "Muhammad Rohkir", "alamat": "Bandung, Jawa Barat", "paketId": 1, "status": "aktif" },
+    { "id": 2, "nama": "Budi Santoso", "alamat": "Cibiru, Bandung", "paketId": 2, "status": "aktif" },
+    { "id": 3, "nama": "Siti Aminah", "alamat": "Cileunyi, Bandung", "paketId": 1, "status": "aktif" }
+  ],
+  "pembayaran": [
+    { "id": 1, "tanggal": "2026-10-05", "jam": "09:30:00", "pelangganId": 1, "jumlah": 125000, "metode": "Tunai", "bulan": "2026-10", "dicatatOleh": "agen" },
+    { "id": 2, "tanggal": "2026-10-08", "jam": "14:15:00", "pelangganId": 2, "jumlah": 175000, "metode": "Transfer", "bulan": "2026-10", "dicatatOleh": "agen" }
+  ],
+  "paket": [],
+  "agen": []
+}
